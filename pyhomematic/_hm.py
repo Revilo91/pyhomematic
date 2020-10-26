@@ -33,7 +33,7 @@ REMOTES = {
         'connect': True,
     }}
 DEVICEFILE = None  # e.g. devices_%s.json
-PARAMSETFILE = None # e.g. paramsets_%s.json
+PARAMSETFILE = None  # e.g. paramsets_%s.json
 INTERFACE_ID = 'pyhomematic'
 XML_API_URL = '/config/xmlapi/devicelist.cgi'
 JSONRPC_URL = '/api/homematic.cgi'
@@ -646,10 +646,10 @@ class ServerThread(threading.Thread):
                 raise Exception
             try:
                 host['type'] = BACKEND_UNKNOWN
-                #if "Homegear" in self.proxies[host['id']].getVersion():
+                # if "Homegear" in self.proxies[host['id']].getVersion():
                 #    LOG.debug("__init__: Host is Homegear")
                 #    host['type'] = BACKEND_HOMEGEAR
-                #else:
+                # else:
                 #    LOG.debug("__init__: Host is CCU")
                 #    host['type'] = BACKEND_CCU
             except Exception as err:
@@ -682,7 +682,7 @@ class ServerThread(threading.Thread):
             try:
                 # For HomeMatic IP, init is not working correctly. We fetch the device list and create
                 # the device objects before the init is performed.
-                if proxy._remoteport in [2010, 32010, 42010]:
+                if proxy._remoteport in [2000, 2001, 2010, 32010, 42010]:
                     dev_list = proxy.listDevices(interface_id)
                     self._rpcfunctions.newDevices(interface_id=interface_id, dev_descriptions=dev_list)
                 proxy.init("http://%s:%i" %
