@@ -69,6 +69,18 @@ class SensorHmIPNoVoltage(HMSensor, HelperRssiDevice, HelperLowBatIP):
          - but no voltage of batteries"""
 
 
+class SensorHmIPNoLowbat(HMSensor, HelperRssiDevice, HelperOperatingVoltageIP):
+    """Homematic IP sensors always have
+         - strength of the signal received by the CCU (HelperRssiDevice).
+           Be aware that HMIP devices have a reversed understanding of PEER
+           and DEVICE compared to standard HM devices.
+         - strength of the signal received by the device (HelperRssiPeer).
+           Be aware that standard HMIP devices have a reversed understanding of PEER
+           and DEVICE compared to standard HM devices.
+         - but no low battery status (HelperLowBatIP)
+         - voltage of the batteries (HelperOperatingVoltageIP)"""
+
+
 class SensorHmIPNoBattery(HMSensor, HelperRssiDevice):
     """Some Homematic IP sensors have
          - strength of the signal received by the CCU (HelperRssiDevice).
@@ -77,7 +89,7 @@ class SensorHmIPNoBattery(HMSensor, HelperRssiDevice):
          - strength of the signal received by the device (HelperRssiPeer).
            Be aware that standard HMIP devices have a reversed understanding of PEER
            and DEVICE compared to standard HM devices.
-         - low battery status (HelperLowBatIP)
+         - but no low battery status (HelperLowBatIP)
          - but no voltage of batteries"""
 
 
@@ -183,6 +195,20 @@ class CO2Sensor(SensorHm, HelperSensorState):
         return self.get_state(channel) == 2
 
 
+class CO2SensorIP(SensorHmIPNoBattery):
+    """CO2 Sensor
+        partial support for HmIP-SCTH230
+        missing relay state and actions
+    """
+
+    def __init__(self, device_description, proxy, resolveparamsets=False):
+        super().__init__(device_description, proxy, resolveparamsets)
+        self.SENSORNODE.update({"CONCENTRATION": [1],
+                                "CONCENTRATION_STATUS": [1],
+                                "HUMIDITY": [4],
+                                "ACTUAL_TEMPERATURE": [4]
+                                })
+
 class WaterSensor(SensorHm, HelperSensorState):
     """Watter detect sensor."""
 
@@ -208,7 +234,9 @@ class PowermeterGas(SensorHm):
         self.SENSORNODE.update({"GAS_ENERGY_COUNTER": [1],
                                 "GAS_POWER": [1],
                                 "ENERGY_COUNTER": [1],
-                                "POWER": [1]})
+                                "POWER": [1],
+                                "IEC_ENERGY_COUNTER": [1,2],
+                                "IEC_POWER": [1,2]})
 
     def get_gas_counter(self, channel=None):
         """Return gas counter."""
@@ -225,6 +253,14 @@ class PowermeterGas(SensorHm):
     def get_power(self, channel=None):
         """Return power counter."""
         return float(self.getSensorData("POWER", channel))
+
+    def get_iec_energy(self, channel=None):
+        """Return iec energy counter."""
+        return float(self.getSensorData("IEC_ENERGY_COUNTER", channel))
+
+    def get_iec_power(self, channel=None):
+        """Return iec power counter."""
+        return float(self.getSensorData("IEC_POWER", channel))
 
 
 class Smoke(SensorHm, HelperBinaryState):
@@ -795,6 +831,26 @@ class IPWeatherSensorBasic(SensorHmIP):
         return bool(self.getAttributeData("TEMPERATURE_OUT_OF_RANGE", channel))
 
 
+class IPRainSensor(SensorHmIPNoLowbat):
+    """HomeMatic IP Rain sensor HmIP-SRD."""
+
+    def __init__(self, device_description, proxy, resolveparamsets=False):
+        super().__init__(device_description, proxy, resolveparamsets)
+
+        # init metadata
+        self.SENSORNODE.update({"ACTUAL_TEMPERATURE": [1]})
+        self.BINARYNODE.update({"RAINING": [1],
+                                "HEATER_STATE": [1]})
+        self.ATTRIBUTENODE.update({"ERROR_CODE": [0],
+                                   "OPERATING_VOLTAGE": [0]})
+
+    def get_temperature(self, channel=None):
+        return float(self.getSensorData("ACTUAL_TEMPERATURE", channel))
+
+    def is_raining(self, channel=None):
+        return bool(self.getBinaryData("RAINING", channel))
+
+
 class IPPassageSensor(SensorHmIP, HelperRssiPeer, HelperEventRemote):
     """HomeMatic IP Passage Sensor. #2 = right to left, #3 = left to right
        This is a binary sensor."""
@@ -1002,6 +1058,68 @@ class IPAlarmSensor(SensorHmIP, HelperSabotageIP):
     def is_acoustic_alarm_active(self, channel=None):
         return bool(self.getBinaryData("ACOUSTIC_ALARM_ACTIVE", channel))
 
+class ValveBox(SensorHmIP):
+    """Valve Box HmIP-FALMOT-C12"""
+
+    def __init__(self, device_description, proxy, resolveparamsets=False):
+        super().__init__(device_description, proxy, resolveparamsets)
+
+        self.SENSORNODE.update({"LEVEL": self.ELEMENT})
+
+    def get_level(self, channel=None):
+        """Return valve state from 0% to 99%"""
+        return float(self.getSensorData("LEVEL", channel))
+
+    @property
+    def ELEMENT(self):
+        return [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+
+class ValveBoxW(SensorHmIPW):
+    """Valve Box HmIPW-FALMOT-C12"""
+
+    def __init__(self, device_description, proxy, resolveparamsets=False):
+        super().__init__(device_description, proxy, resolveparamsets)
+
+        self.SENSORNODE.update({"LEVEL": self.ELEMENT})
+
+    def get_level(self, channel=None):
+        """Return valve state from 0% to 99%"""
+        return float(self.getSensorData("LEVEL", channel))
+
+    @property
+    def ELEMENT(self):
+        return [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+
+class IPLanRouter(HMSensor):
+    """ HmIP Lan Router HmIP-HAP"""
+
+    def __init__(self, device_description, proxy, resolveparamsets=False):
+        super().__init__(device_description, proxy, resolveparamsets)
+
+        self.SENSORNODE.update({"CARRIER_SENSE_LEVEL": [0],
+                                "DUTY_CYCLE_LEVEL": [0]})
+        self.BINARYNODE.update({"DUTY_CYCLE": [0]})
+
+    def get_duty_cycle_level(self, channel=None):
+        return float(self.getSensorData("DUTY_CYCLE_LEVEL", channel))
+
+    def get_carrier_sense_level(self, channel=None):
+        return float(self.getSensorData("CARRIER_SENSE_LEVEL", channel))
+
+class TempModuleSTE2(SensorHmIP):
+    """HmIP-STE2-PCB."""
+
+    def __init__(self, device_description, proxy, resolveparamsets=False):
+        super().__init__(device_description, proxy, resolveparamsets)
+
+        # init metadata
+        self.SENSORNODE.update({"ACTUAL_TEMPERATURE": self.ELEMENT,
+                                "ACTUAL_TEMPERATURE_STATUS": self.ELEMENT})
+
+    @property
+    def ELEMENT(self):
+        return [1, 2, 3]
+
 DEVICETYPES = {
     "HM-Sec-SC": ShutterContact,
     "HM-Sec-SC-2": ShutterContact,
@@ -1102,8 +1220,15 @@ DEVICETYPES = {
     "HmIP-DSD-PCB": IPContact,
     "HB-UNI-Sen-TEMP-DS18B20": TemperatureSensor,
     "HB-UNI-Sen-WEA": HBUNISenWEA,
-	"HmIP-ASIR-B1": IPAlarmSensor,
-	"HmIP-ASIR-O": IPAlarmSensor,
-	"HmIP-ASIR": IPAlarmSensor,
-	"HmIP-ASIR-2": IPAlarmSensor,
+    "HmIP-ASIR-B1": IPAlarmSensor,
+    "HmIP-ASIR-O": IPAlarmSensor,
+    "HmIP-ASIR": IPAlarmSensor,
+    "HmIP-ASIR-2": IPAlarmSensor,
+    "HmIP-FALMOT-C12": ValveBox,
+    "HmIPW-FALMOT-C12": ValveBoxW,
+    "HmIP-SRD": IPRainSensor,
+    "HmIP-HAP": IPLanRouter,
+    "HB-WDS40-THP-O": WeatherStation,
+    "HmIP-STE2-PCB": TempModuleSTE2,
+    "HmIP-SCTH230": CO2SensorIP
 }

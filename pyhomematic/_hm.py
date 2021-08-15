@@ -358,7 +358,7 @@ class RPCFunctions():
             self.systemcallback('readdedDevice', interface_id, addresses)
         return True
 
-    def jsonRpcPost(self, host, jsonport, method, params={}):
+    def jsonRpcPost(self, host, jsonport, method, params={}, verify=False):
         LOG.debug("RPCFunctions.jsonRpcPost: Method: %s" % method)
         try:
             payload = json.dumps(
@@ -366,14 +366,20 @@ class RPCFunctions():
 
             headers = {"Content-Type": 'application/json',
                        "Content-Length": len(payload)}
+            ctx = None
             if jsonport == 443:
                 apiendpoint = "https://%s:%s%s" % (host, jsonport, JSONRPC_URL)
+                if not verify:
+                    ctx = ssl.create_default_context()
+                    ctx.check_hostname = False
+                    ctx.verify_mode = ssl.CERT_NONE
             else:
                 apiendpoint = "http://%s:%s%s" % (host, jsonport, JSONRPC_URL)
             LOG.debug("RPCFunctions.jsonRpcPost: API-Endpoint: %s" %
                       apiendpoint)
             req = urllib.request.Request(apiendpoint, payload, headers)
-            resp = urllib.request.urlopen(req)
+            # pylint: disable=consider-using-with
+            resp = urllib.request.urlopen(req, context=ctx)
             if resp.status == 200:
                 try:
                     return json.loads(resp.read().decode('utf-8'))
@@ -430,7 +436,9 @@ class RPCFunctions():
                 interface = False
                 if response['error'] is None and response['result']:
                     for i in response['result']:
-                        if i['port'] in [self.remotes[remote]['port'], self.remotes[remote]['port'] + 30000]:
+                        if i['port'] in [self.remotes[remote]['port'],
+                                         self.remotes[remote]['port'] + 30000,
+                                         self.remotes[remote]['port'] + 40000]:
                             interface = i['name']
                             break
                 LOG.debug(
@@ -453,6 +461,10 @@ class RPCFunctions():
                             if i.get('address') in self.devices[remote]:
                                 self.devices[remote][
                                     i['address']].NAME = i['name']
+                                for channel_device_response in i['channels']:
+                                    name = channel_device_response['name']
+                                    self.devices_all[remote][channel_device_response['address']].NAME = name
+
                         except Exception as err:
                             LOG.warning(
                                 "RPCFunctions.addDeviceNames: Exception: %s" % str(err))
@@ -471,6 +483,7 @@ class RPCFunctions():
         elif self.remotes[remote]['resolvenames'] == 'xml':
             LOG.warning("Resolving names with the XML-API addon will be disabled in a future release. Please switch to json.")
             try:
+                # pylint: disable=consider-using-with
                 response = urllib.request.urlopen(
                     "http://%s%s" % (self.remotes[remote]['ip'], XML_API_URL), timeout=5)
                 device_list = response.read().decode("ISO-8859-1")

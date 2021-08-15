@@ -1,3 +1,44 @@
+Version 0.1.74 (2021-08-13)
+- HmIP-WGC @mwagner
+- HmIP-SCTH230 @macrojames
+- HmIP-DRDI3 @gbotti
+- HmIP-MOD-RC8 @maedball
+- HmIP-USBSM @maedball
+- HmIP-BWTH add switching state for heating valve @sVnsation
+- HmIPW-DRI32 + HmIPW-DRI16 fix button mode @GagaPete
+
+Version 0.1.73 (2021-06-06)
+- Add support for HmIPW-FALMOT-C12 @Knechtie
+- Fix HmIP-STHD and HmIP-STH @yschroeder
+- Add tilt-support for shutters @Knechtie
+- Add support vor HmIP-MIO16-PCB @Knechtie
+- Add HmIPW-STH @GagaPete
+- Fix HmIP-STE2-PCB @danielperna84
+- Add port-offset 40000 (Issue #393) @danielperna84
+- Minor thermostat improvement as provided by @neffs
+
+Version 0.1.72 (2021-03-14)
+- Disable TLS-check in JSON-RPC (Issue #372) @danielperna84
+- Improve some HmIP-remotes @SukramJ
+- Support Bosch ETRVs @niecore
+- Support HmIP-eTRV-C-2 @klada
+- Fix press-events von HmIP devices @chiss158
+- Support HB-WDS40-THP-O @SuperMasterPhoenix
+- Remove low_bat for HmIP-SRD @SujramJ
+- Support HmIP-HAP @dfigus
+- Add low_bat for HmIP-PCBS-BAT @danielperna84
+- Support for HmIP-STE2-PCB @danielperna84
+
+Version 0.1.71 (2021-01-01)
+- Improve naming of covers @weissm
+- Add support for HmIP-DRSI1 (Issue #353) @lukasriegel
+- Add support for HmIP-WRCC2 @Remko76
+- Implement INHIBIT parameter @PH89
+- Sensornode for HmIP blind actuators @rbloehm
+- Add HmIP-FALMOT-C12 (Issue #367) @danielperna84
+- Add HmIP-SRD (Issue #347) @danielperna84
+- Set loglevel for getValue to Info + cleanup @danielperna84
+
 Version 0.1.70 (2020-10-03)
 - Remove toplevel tests (Issue #334) @onkelbeh
 
